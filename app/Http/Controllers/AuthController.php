@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Testing\Fluent\Concerns\Has;
+use Melipayamak\MelipayamakApi;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
@@ -91,19 +92,32 @@ class AuthController extends Controller
 
             $code= mt_rand(100000, 999999);
             $expiresAt=Carbon::now()->addMinutes(2);
+            try{
+                $username = '09153291368';
+                $password = '6L05H';
+                $api = new MelipayamakApi($username,$password);
+                $sms = $api->sms();
+                $to = $user->phone;
+                $from = '50002710091368';
+                $text = $code;
+                $response = $sms->send($to,$from,$text);
+                $json = json_decode($response);
+
+                $user=$user->update(['otp_code'=>Hash::make($code),'otp_expires_at'=>$expiresAt]);
+
+                return response()->json([
+                    'status' => [
+                        'code' => 0,
+                        'message' => 'با موفقیت وارد شدید'
+                    ],
+                    'data' => ['user'=>$user,'expires_at'=>$expiresAt,'code'=>$code,'json'=>$json],
 
 
-            $user=$user->update(['otp_code'=>Hash::make($code),'otp_expires_at'=>$expiresAt]);
+                ]);
+            }catch(\Exception $e){
 
-            return response()->json([
-                'status' => [
-                    'code' => 0,
-                    'message' => 'با موفقیت وارد شدید'
-                ],
-                'data' => ['user'=>$user,'expires_at'=>$expiresAt,'code'=>$code],
+            }
 
-
-            ]);
 
         } catch (\Throwable $th) {
             return response()->json([

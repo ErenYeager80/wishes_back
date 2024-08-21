@@ -1,57 +1,94 @@
 <?php
 
+/**
+ * Created by Reliese Model.
+ */
+
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
+/**
+ * Class User
+ *
+ * @property int $id
+ * @property string|null $first_name
+ * @property string|null $last_name
+ * @property string|null $email
+ * @property Carbon|null $email_verified_at
+ * @property string|null $otp_code
+ * @property Carbon|null $otp_expires_at
+ * @property string $phone
+ * @property string|null $password
+ * @property string|null $remember_token
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ *
+ * @property Collection|File[] $files
+ * @property Collection|News[] $news
+ * @property Collection|Wish[] $wishes
+ *
+ * @package App\Models
+ */
 class User extends Authenticatable implements JWTSubject
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
-    protected $fillable = [
-        'first_name',
-        'last_name',
-        'phone',
-        'otp_code',
-        'otp_expires_at',
+    protected $table = 'users';
 
-    ];
+	protected $casts = [
+		'email_verified_at' => 'datetime',
+		'otp_expires_at' => 'datetime'
+	];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
-    protected $hidden = [
-        'otp_code',
-        'otp_expires_at',
-        'password',
-    ];
+	protected $hidden = [
+		'password',
+		'remember_token'
+	];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
+	protected $fillable = [
+		'first_name',
+		'last_name',
+		'email',
+        'role',
+		'email_verified_at',
+		'otp_code',
+		'otp_expires_at',
+		'phone',
+		'password',
+		'remember_token'
+	];
+
+	public function files()
+	{
+		return $this->hasMany(File::class);
+	}
+
+	public function news()
+	{
+		return $this->hasMany(News::class, 'created_by');
+	}
+
+	public function wishes()
+	{
+		return $this->hasMany(Wish::class);
+	}
 
     public function getJWTIdentifier()
     {
         return $this->getKey();
     }
 
+    /**
+     * Return a key value array, containing any custom claims to be added to the JWT.
+     *
+     * @return array
+     */
     public function getJWTCustomClaims()
     {
         return [];
